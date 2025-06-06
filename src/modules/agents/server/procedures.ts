@@ -1,32 +1,87 @@
 import { db } from "@/db";
 import { agents } from "@/db/schema";
-import {
-  createTRPCRouter,
-  baseProcedure,
-  protectedProcedure,
-} from "@/trpc/init";
+import { createTRPCRouter, protectedProcedure } from "@/trpc/init";
 import { agentsInsertSchema } from "../schemas";
-import { eq, getTableColumns, sql } from "drizzle-orm";
+import { and, count, desc, eq, getTableColumns, ilike, sql } from "drizzle-orm";
 import z from "zod";
+import {
+  DEAFULT_PAGE,
+  DEFAULT_PAGE_SIZE,
+  MAX_PAGE_SIZE,
+  MIN_PAGE_SIZE,
+} from "@/constants";
 
 export const agentsRouter = createTRPCRouter({
   // Use protectedProcedure
-  getMany: protectedProcedure.query(async () => {
-    return await db.select().from(agents);
-  }),
-
-  getOne: protectedProcedure
-    .input(z.object({ id: z.string() }))
-    .query(async ({ input }) => {
-      const [existingAgent] = await db
+  getMany: protectedProcedure
+    .input(
+      z.object({
+        page: z.number().default(DEAFULT_PAGE),
+        pageSize: z
+          .number()
+          .min(MIN_PAGE_SIZE)
+          .max(MAX_PAGE_SIZE)
+          .default(DEFAULT_PAGE_SIZE),
+        search: z.string().nullish(),
+      })
+    )
+    .query(async ({ ctx, input }) => {
+      const { page, pageSize, search } = input;
+      const data = await db
         .select({
           ...getTableColumns(agents),
           // TODO: Implement meeting count logic
-          meetingCount: sql`COUNT(*)`,
+          meetingCount: sql<number>`4`,
         })
         .from(agents)
-        .where(eq(agents.id, input.id));
-      return existingAgent;
+        .where(
+          and(
+            eq(agents.userId, ctx.auth.user.id),
+            search ? ilike(agents.name, `%${search}%`) : undefined
+          )
+        )
+        .orderBy(desc(agents.createdAt), desc(agents.id))
+        .limit(pageSize)
+        .offset((page - 1) * pageSize);
+
+      const [total] = await db
+        .select({ count: count() })
+        .from(agents)
+        .where(
+          and(
+            eq(agents.userId, ctx.auth.user.id),
+            search ? ilike(agents.name, `%${search}%`) : undefined
+          )
+        );
+
+      const totalPages = Math.ceil(total.count / pageSize);
+
+      return {
+        items: data,
+        total: total.count,
+        totalPages,
+      };
+    }),
+
+  getOne: protectedProcedure
+    .input(z.object({ id: z.string() }))
+    .query(async ({ ctx, input }) => {
+      const { id } = input;
+      const agent = await db
+        .select({
+          ...getTableColumns(agents),
+          meetingCount: sql<number>`4`, // TODO: Implement meeting count logic
+        })
+        .from(agents)
+        .where(and(eq(agents.id, id), eq(agents.userId, ctx.auth.user.id)))
+        .limit(1)
+        .then((res) => res[0]);
+
+      if (!agent) {
+        throw new Error("Agent not found");
+      }
+
+      return agent;
     }),
 
   create: protectedProcedure

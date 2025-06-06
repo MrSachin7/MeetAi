@@ -1,4 +1,4 @@
-import AgentsListHeader from "@/components/agents-list-header";
+import AgentsListHeader from "@/modules/agents/ui/views/agents-list-header";
 import { auth } from "@/lib/auth";
 import AgentsView, {
   AgentsViewLoading,
@@ -8,8 +8,15 @@ import { dehydrate, HydrationBoundary } from "@tanstack/react-query";
 import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
+import { SearchParams } from "nuqs";
+import { loadSeachParams } from "@/modules/agents/params";
 
-const Page = async () => {
+interface AgentsPageProps {
+  searchParams: Promise<SearchParams>;
+}
+
+const Page = async ({ searchParams }: AgentsPageProps) => {
+  const filters = await loadSeachParams(searchParams);
   const session = await auth.api.getSession({
     headers: await headers(),
   });
@@ -18,7 +25,11 @@ const Page = async () => {
     redirect("/sign-in");
   }
   const queryClient = getQueryClient();
-  void queryClient.prefetchQuery(trpc.agents.getMany.queryOptions());
+  void queryClient.prefetchQuery(
+    trpc.agents.getMany.queryOptions({
+      ...filters,
+    })
+  );
   return (
     <>
       <AgentsListHeader />
