@@ -10,6 +10,7 @@ import {
   MAX_PAGE_SIZE,
   MIN_PAGE_SIZE,
 } from "@/constants";
+import { TRPCError } from "@trpc/server";
 
 export const agentsRouter = createTRPCRouter({
   // Use protectedProcedure
@@ -78,7 +79,7 @@ export const agentsRouter = createTRPCRouter({
         .then((res) => res[0]);
 
       if (!agent) {
-        throw new Error("Agent not found");
+        throw new TRPCError({ code: "NOT_FOUND", message: "Agent not found" });
       }
 
       return agent;
