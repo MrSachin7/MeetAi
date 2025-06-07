@@ -9,14 +9,14 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 import React, { Suspense } from "react";
 import { SearchParams } from "nuqs";
-import { loadSeachParams } from "@/modules/agents/params";
+import { loadSearchParams } from "@/modules/agents/params";
 
 interface AgentsPageProps {
   searchParams: Promise<SearchParams>;
 }
 
 const Page = async ({ searchParams }: AgentsPageProps) => {
-  const filters = await loadSeachParams(searchParams);
+  const filters = await loadSearchParams(searchParams);
   const session = await auth.api.getSession({
     headers: await headers(),
   });

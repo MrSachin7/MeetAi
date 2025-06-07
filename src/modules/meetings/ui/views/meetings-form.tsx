@@ -18,7 +18,6 @@ import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
 import { MeetingGetOne } from "../../types";
 import { meetingsInsertSchema } from "../../schema";
-import { DEFAULT_PAGE_SIZE } from "@/constants";
 import CommandSelect from "@/components/command-select";
 import GeneratedAvatar from "@/components/generated-avatar";
 import NewAgentDialog from "@/modules/agents/ui/views/new-agent-dialog";
