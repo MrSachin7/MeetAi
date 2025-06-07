@@ -2,13 +2,14 @@
 import React from "react";
 import { Button } from "../../../../components/ui/button";
 import { PlusIcon, XCircleIcon } from "lucide-react";
-import NewMeetingDialog from "./new-meeting-dialog";
+import UpdateMeetingDialog from "./update-meeting-dialog";
 import MeetingsSearchFilter from "./meetings-search-filter";
 import StatusFilter from "./status-filter";
 import AgentIdFilter from "./agent-id-filter";
 import { useMeetingFilters } from "../../hooks/use-meeting-filters";
 import { set } from "date-fns";
 import { ScrollArea, ScrollBar } from "@/components/ui/scroll-area";
+import NewMeetingDialog from "./new-meeting-dialog copy";
 
 const MeetingsListHeader = () => {
   const [filters, setFilters] = useMeetingFilters();
